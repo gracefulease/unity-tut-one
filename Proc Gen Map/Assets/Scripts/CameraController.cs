@@ -3,18 +3,14 @@ using System.Collections;
 
 public class CameraController : MonoBehaviour
 {
-
-    public GameObject player;
-
+    
     private Vector3 offset;
-
-    void Start()
+    
+    void Update()
     {
-        offset = transform.position - player.transform.position;
-    }
-
-    void LateUpdate()
-    {
-        transform.position = player.transform.position + offset;
+        float x = Input.GetAxis("Vertical");
+        float z = Input.GetAxis("Horizontal");
+        transform.position += transform.forward * x;
+        transform.Rotate(0, z, 0);
     }
 }
