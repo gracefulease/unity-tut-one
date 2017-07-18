@@ -30,6 +30,7 @@ public class TerrainChunk : ScriptableObject
 
     private TerrainChunkSettings Settings { get; set; }
 
+    private float[,] heightmap;
     public float noiseSeed;
     private NoiseProvider NoiseProvider { get; set; }
 
@@ -52,7 +53,7 @@ public class TerrainChunk : ScriptableObject
         if (noiseSeed != 0)
             noiseSeed = Time.fixedTime;
 
-        var heightmap = GetHeightmap();
+        heightmap = GetHeightmap();
         terrainData.SetHeights(0, 0, heightmap);
         terrainData.size = new Vector3(Settings.Length, Settings.Height, Settings.Length);
         
@@ -82,6 +83,12 @@ public class TerrainChunk : ScriptableObject
 
         return heightmap;
     }
+
+    public float GetHeight(int x, int z)
+    {
+        return heightmap[z, x];
+
+    }
 }
 
 public class NoiseProvider
@@ -89,6 +96,6 @@ public class NoiseProvider
 
     public float GetValue(float x, float z, float noiseSeed)
     {
-        return Mathf.PerlinNoise(noiseSeed + x, noiseSeed + z);
+        return Mathf.PerlinNoise(noiseSeed + x, noiseSeed + z) + (Mathf.PerlinNoise(noiseSeed + x*10, noiseSeed + z*10)/10);
     }
 }

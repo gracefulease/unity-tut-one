@@ -5,12 +5,13 @@ public class PlayerController : MonoBehaviour
 {
 
     public float speed;
-
-    private Rigidbody rb;
+    public float rotationSpeed;
+    CharacterController cc;
 
     void Start()
     {
-        rb = GetComponent<Rigidbody>();
+        cc = GetComponent<CharacterController>();
+        
     }
 
     void FixedUpdate()
@@ -19,5 +20,8 @@ public class PlayerController : MonoBehaviour
         float z = Input.GetAxis("Horizontal");
         transform.position += transform.forward * x;
         transform.Rotate(0, z, 0);
+
+        Physics.gravity = new Vector3(0, 2.0f, 0);
+        cc.SimpleMove(Physics.gravity);
     }
 }
