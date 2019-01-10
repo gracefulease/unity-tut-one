@@ -4,32 +4,24 @@ using UnityEngine;
 
 public class MapGen : MonoBehaviour
 {
-
-    private TerrainChunk[,] world;
-
+    public int width = 10;
+    public int length = 10;
     // Use this for initialization
     void Start()
     {
-
-        var settings = new TerrainChunkSettings(65, 65, 100, 50);
-        world = new TerrainChunk[4, 4];
-
+        
         for (var i = 0; i < 1; i++)
         {
             for (var j = 0; j < 1; j++)
             {
-                TerrainChunk terrain = new TerrainChunk(settings, i, j, 0);
+                TerrainChunk terrain = new TerrainChunk(i,j,width,length);
                 terrain.CreateTerrain();
-                world[i, j] = terrain;
             }
         }
-
-        if (world[0, 0])
-        {
-            TerrainChunk terrain = world[1, 1];
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
-            player.transform.position = new Vector3(50, terrain.GetHeight(0, 0), 50);
-        }
+        
+        GameObject player = GameObject.FindGameObjectWithTag("Player");  
+        player.transform.position = new Vector3(50, 50, 50);
+        
 
     }
 

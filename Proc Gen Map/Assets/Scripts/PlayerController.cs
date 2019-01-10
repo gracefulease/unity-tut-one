@@ -21,7 +21,7 @@ public class PlayerController : MonoBehaviour
         transform.position += transform.forward * x;
         transform.Rotate(0, z, 0);
 
-        Physics.gravity = new Vector3(0, 2.0f, 0);
+        Physics.gravity = new Vector3(0, -2.0f, 0);
         cc.SimpleMove(Physics.gravity);
     }
 }

@@ -1,6 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
 
 public class TerrainChunkSettings
@@ -20,11 +20,13 @@ public class TerrainChunkSettings
     }
 }
 
-public class TerrainChunk : ScriptableObject
+public class TerrainChunk : MonoBehaviour
 {
     public int X { get; private set; }
-
     public int Z { get; private set; }
+
+    public int width { get; private set; }
+    public int length { get; private set; }
 
     private Terrain Terrain { get; set; }
 
@@ -34,63 +36,55 @@ public class TerrainChunk : ScriptableObject
     public float noiseSeed;
     private NoiseProvider NoiseProvider { get; set; }
 
-    public TerrainChunk(TerrainChunkSettings _settings, int _X, int _Z, int _noiseSeed)
+    public TerrainChunk(int _X, int _Z, int _width, int _length)
     {
-        Settings = _settings;
         X = _X;
         Z = _Z;
-        noiseSeed = _noiseSeed;
+        width = _width;
+        length = _length;
+        noiseSeed = 1.0f;
         NoiseProvider = new NoiseProvider();
     }
 
 
-    public void CreateTerrain()
+    public MeshData CreateTerrain()
     {
-        var terrainData = new TerrainData();
-        terrainData.heightmapResolution = Settings.HeightmapResolution;
-        terrainData.alphamapResolution = Settings.AlphamapResolution;
+        float[,] heightMap = new float[width, length];
 
-        if (noiseSeed != 0)
-            noiseSeed = Time.fixedTime;
-
-        heightmap = GetHeightmap();
-        terrainData.SetHeights(0, 0, heightmap);
-        terrainData.size = new Vector3(Settings.Length, Settings.Height, Settings.Length);
-        
-
-        var newTerrainGameObject = Terrain.CreateTerrainGameObject(terrainData);
-        newTerrainGameObject.transform.position = new Vector3(X * Settings.Length, 0, Z * Settings.Length);
-        Terrain = newTerrainGameObject.GetComponent<Terrain>();
-        Terrain.activeTerrain.heightmapMaximumLOD = 1;
-       // Terrain.activeTerrain.heightmapPixelError = 64;
-        Terrain.Flush();
-    }
-
-    private float[,] GetHeightmap()
-    {
-        var heightmap = new float[Settings.HeightmapResolution, Settings.HeightmapResolution];
-
-        for (var zRes = 0; zRes < Settings.HeightmapResolution; zRes++)
+        for (int x = X; x < X + width; x++)
         {
-            for (var xRes = 0; xRes < Settings.HeightmapResolution; xRes++)
+            for (int z = Z; z < Z + length; z++)
             {
-                var xCoordinate = X + (float)xRes / (Settings.HeightmapResolution - 1);
-                var zCoordinate = Z + (float)zRes / (Settings.HeightmapResolution - 1);
-
-                heightmap[zRes, xRes] = NoiseProvider.GetValue(xCoordinate, zCoordinate, noiseSeed);
+                heightMap[x, z] = NoiseProvider.GetValue(x, z, noiseSeed);
             }
         }
 
-        return heightmap;
-    }
+        MeshData meshData = new MeshData(width, length);
+        int vertexIndex = 0;
 
-    public float GetHeight(int x, int z)
-    {
-        return heightmap[z, x];
+        for (int x =1; x < width; x++)
+        {
+            for (int z = 1; z < length; z++)
+            {
+                meshData.vertices[vertexIndex] = new Vector3(X + x, heightmap[x, z], Z + z);
+                meshData.uvs[vertexIndex] = new Vector2(x / (float)width, z / (float)length);
+
+                if(x < width - 1 && z < length - 1)
+                {
+                    meshData.AddTriangle(vertexIndex, vertexIndex + width + 1, vertexIndex + width);
+                    meshData.AddTriangle(vertexIndex + width +1, vertexIndex, vertexIndex + 1);
+                }
+
+
+                vertexIndex++;
+            }
+        }
+
+        return meshData;
 
     }
 }
-
+    
 public class NoiseProvider
 {
 
@@ -98,4 +92,40 @@ public class NoiseProvider
     {
         return Mathf.PerlinNoise(noiseSeed + x, noiseSeed + z) + (Mathf.PerlinNoise(noiseSeed + x*10, noiseSeed + z*10)/10);
     }
+}
+
+public class MeshData
+{
+    public Vector3[] vertices;
+    public int[] triangles;
+    public Vector2[] uvs;
+
+    int triangleIndex;
+
+    public MeshData(int meshWidth, int meshLength)
+    {
+        vertices = new Vector3[meshWidth * meshLength];
+        uvs = new Vector2[meshWidth * meshLength];
+        triangles = new int[(meshWidth - 1) * (meshLength - 1) * 6];
+    }
+
+    public void AddTriangle(int a, int b, int c)
+    {
+        triangles[triangleIndex] = a;
+        triangles[triangleIndex + 1] = b;
+        triangles[triangleIndex + 2] = c;
+        triangleIndex += 3;
+    }
+
+    public Mesh CreateMesh()
+    {
+        Mesh mesh = new Mesh();
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.uv = uvs;
+        mesh.RecalculateNormals();
+        return mesh;
+    }
+
+
 }
